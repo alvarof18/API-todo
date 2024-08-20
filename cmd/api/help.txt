@@ -1,0 +1,31 @@
+//Working with Slices
+
+// listTask := []Task{
+// 	{"Cocinar", false, 20240602},
+// 	{"Correr", false, 20240602},
+// 	{"Estudiar", false, 20240602},
+// }
+
+// fmt.Println("Original list: ", listTask)
+// newTask := Task{"Programar", false, 20240602}
+// listTask = append(listTask, newTask)
+// fmt.Println("New Element", listTask)
+
+// //Para encontrar un indice
+// //indx := slices.IndexFunc(listTask, func(t Task) bool { return t.Title == "Estudiar" })
+
+// //Borrar un elemento de un slice
+// listTask = slices.DeleteFunc(listTask, func(t Task) bool { return t.Title == "Programar" })
+// fmt.Println("newList: ", listTask)
+
+// //Actualizar elemento
+// indx := slices.IndexFunc(listTask, func(t Task) bool { return t.Title == "Cocinr" })
+
+// if indx >= 0 {
+// 	cr := &listTask[indx]
+// 	(*cr).Title = "New Title"
+// 	fmt.Println("Update list:", listTask)
+
+// } else {
+// 	fmt.Printf("Task with title: %v not found", indx)
+// }
