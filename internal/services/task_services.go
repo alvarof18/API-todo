@@ -9,18 +9,25 @@ import (
 	"github.com/google/uuid"
 )
 
-type TaskService struct{}
+type TaskService interface {
+	GetAllTasks() []models.Task
+	FindTaskById(id string) (*models.Task, error)
+	AddTasks(payload models.Task) (*models.Task, error)
+	DeleteTask(id string) error
+	UpdateTask(id string, payload models.UpdateTaskInput) (*models.Task, error)
+}
 
-//All Bussines logic here
+type TaskServiceImpl struct{}
 
+// All Bussines logic here
 var tasks = []models.Task{}
 
-func (s *TaskService) GetAllTasks() []models.Task {
+func (s *TaskServiceImpl) GetAllTasks() []models.Task {
 	return tasks
 }
 
 // Nota coloco el models como puntero para poder devolver un nil porque sino tendria que devolver una structura vacia
-func (s *TaskService) AddTasks(payload models.Task) (*models.Task, error) {
+func (s *TaskServiceImpl) AddTasks(payload models.Task) (*models.Task, error) {
 	newTask := models.Task{
 		ID:        uuid.New().String(),
 		Title:     payload.Title,
@@ -31,7 +38,7 @@ func (s *TaskService) AddTasks(payload models.Task) (*models.Task, error) {
 	return &newTask, nil
 }
 
-func (s *TaskService) FindTaskById(id string) (*models.Task, error) {
+func (s *TaskServiceImpl) FindTaskById(id string) (*models.Task, error) {
 	index, err := getIndexTask(id)
 	if err != nil {
 		return nil, err
@@ -39,7 +46,7 @@ func (s *TaskService) FindTaskById(id string) (*models.Task, error) {
 	return &tasks[index], nil
 }
 
-func (s *TaskService) DeleteTask(id string) error {
+func (s *TaskServiceImpl) DeleteTask(id string) error {
 	index, err := getIndexTask(id)
 	if err != nil {
 		return err
@@ -49,7 +56,7 @@ func (s *TaskService) DeleteTask(id string) error {
 
 }
 
-func (s *TaskService) UpdateTask(id string, payload models.UpdateTaskInput) (*models.Task, error) {
+func (s *TaskServiceImpl) UpdateTask(id string, payload models.UpdateTaskInput) (*models.Task, error) {
 	index, err := getIndexTask(id)
 	if err != nil {
 		return nil, errors.New("task not found to Update")

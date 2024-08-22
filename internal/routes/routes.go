@@ -2,13 +2,15 @@ package routes
 
 import (
 	"todo-api/internal/controllers"
+	"todo-api/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Routes(router *gin.Engine) {
 
-	taskController := controllers.TaskController{}
+	taskService := &services.TaskServiceImpl{}
+	taskController := controllers.NewTaskController(taskService)
 
 	router.GET("/tasks", taskController.GetAllTasks)
 	router.GET("/task/:id", taskController.GetTaskById)

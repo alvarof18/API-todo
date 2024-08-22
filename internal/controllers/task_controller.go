@@ -1,3 +1,5 @@
+// Maneja las peticiones HTTP
+
 package controllers
 
 import (
@@ -8,33 +10,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Maneja las peticiones HTTP
-type TaskController struct{}
-
-var servicesTask = services.TaskService{}
-
-func (c *TaskController) GetAllTasks(context *gin.Context) {
-	context.IndentedJSON(http.StatusOK, servicesTask.GetAllTasks())
+type TaskController struct {
+	TaskService services.TaskService
 }
 
-func (c *TaskController) AddTasks(context *gin.Context) {
+// Simular una inyeccion de dependencia
+func NewTaskController(service services.TaskService) *TaskController {
+	return &TaskController{TaskService: service}
+}
+
+func (ctrl *TaskController) GetAllTasks(context *gin.Context) {
+
+	tasks := ctrl.TaskService.GetAllTasks()
+	context.IndentedJSON(http.StatusOK, tasks)
+}
+
+func (ctrl *TaskController) AddTasks(context *gin.Context) {
 	var payload models.Task
 	if err := context.ShouldBindJSON(&payload); err != nil {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 		return
 	}
-	newTask, err := servicesTask.AddTasks(payload)
+	newTask, err := ctrl.TaskService.AddTasks(payload)
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "Failed to create task"})
 		return
 	}
-	context.IndentedJSON(http.StatusOK, newTask)
+	context.IndentedJSON(http.StatusCreated, newTask)
 }
 
-func (c *TaskController) DeleteTask(context *gin.Context) {
+func (ctrl *TaskController) DeleteTask(context *gin.Context) {
 	idTask := context.Param("id")
 
-	err := servicesTask.DeleteTask(idTask)
+	err := ctrl.TaskService.DeleteTask(idTask)
 
 	if err != nil {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"Error": "Task not found to delete"})
@@ -43,9 +51,9 @@ func (c *TaskController) DeleteTask(context *gin.Context) {
 	context.Done()
 }
 
-func (c *TaskController) GetTaskById(context *gin.Context) {
+func (ctrl *TaskController) GetTaskById(context *gin.Context) {
 	id := context.Param("id")
-	task, err := servicesTask.FindTaskById(id)
+	task, err := ctrl.TaskService.FindTaskById(id)
 
 	if err != nil {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"Error": err})
@@ -54,7 +62,7 @@ func (c *TaskController) GetTaskById(context *gin.Context) {
 	context.IndentedJSON(http.StatusOK, task)
 }
 
-func (c *TaskController) UpdateTask(context *gin.Context) {
+func (ctrl *TaskController) UpdateTask(context *gin.Context) {
 	var input models.UpdateTaskInput
 	idTask := context.Param("id")
 	err := context.ShouldBind(&input)
@@ -62,7 +70,7 @@ func (c *TaskController) UpdateTask(context *gin.Context) {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 		return
 	}
-	updateTask, err := servicesTask.UpdateTask(idTask, input)
+	updateTask, err := ctrl.TaskService.UpdateTask(idTask, input)
 	if err != nil {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"Error": "Task not found to Update"})
 		return
