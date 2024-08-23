@@ -9,6 +9,7 @@ import (
 	"time"
 	"todo-api/internal/controllers"
 	"todo-api/internal/models"
+	"todo-api/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,9 +27,9 @@ func (m *MockTaskServices) GetAllTasks() []models.Task {
 	return args.Get(0).([]models.Task)
 }
 
-func (m *MockTaskServices) AddTasks(payload models.Task) (*models.Task, error) {
+func (m *MockTaskServices) AddTasks(payload models.Task) error {
 	args := m.Called(payload)
-	return args.Get(0).(*models.Task), args.Error(1)
+	return args.Error(0)
 }
 
 func (m *MockTaskServices) DeleteTask(id string) error {
@@ -41,9 +42,9 @@ func (m *MockTaskServices) FindTaskById(id string) (*models.Task, error) {
 	return args.Get(0).(*models.Task), args.Error(1)
 }
 
-func (m *MockTaskServices) UpdateTask(id string, payload models.UpdateTaskInput) (*models.Task, error) {
-	args := m.Called(id, payload)
-	return args.Get(0).(*models.Task), args.Error(1)
+func (m *MockTaskServices) UpdateTask(newTask models.Task) error {
+	args := m.Called(newTask)
+	return args.Error(0)
 }
 
 func SetUpRouter() *gin.Engine {
@@ -54,8 +55,9 @@ func SetUpRouter() *gin.Engine {
 
 // Prueba para el método GetAllTasks del controlador
 func TestGetAllTasks(t *testing.T) {
-	mockServices := new(MockTaskServices)
-	taskController := controllers.NewTaskController(mockServices)
+	taskRepository := new(MockTaskServices)
+	taskServices := services.NewTaskService(taskRepository)
+	taskController := controllers.NewTaskController(*taskServices)
 
 	//Configurar repuesta simulado
 
@@ -80,7 +82,7 @@ func TestGetAllTasks(t *testing.T) {
 		},
 	}
 
-	mockServices.On("GetAllTasks").Return(mockTasks)
+	taskRepository.On("GetAllTasks").Return(mockTasks)
 	router := SetUpRouter()
 
 	router.GET("/tasks", taskController.GetAllTasks)
@@ -99,13 +101,14 @@ func TestGetAllTasks(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &responseTasks)
 
 	assert.Len(t, responseTasks, 3)
-	mockServices.AssertExpectations(t)
+	taskRepository.AssertExpectations(t)
 
 }
 
 func TestCreateTaskWithMock(t *testing.T) {
-	mockService := new(MockTaskServices)
-	controller := controllers.NewTaskController(mockService)
+	taskRepository := new(MockTaskServices)
+	taskServices := services.NewTaskService(taskRepository)
+	taskController := controllers.NewTaskController(*taskServices)
 
 	//Configuracion del mock
 	taskInput := models.Task{Title: "New Task"}
@@ -118,10 +121,10 @@ func TestCreateTaskWithMock(t *testing.T) {
 	}
 
 	// Mock the behavior
-	mockService.On("AddTasks", taskInput).Return(mockTask, nil)
+	taskRepository.On("AddTasks", taskInput).Return(mockTask, nil)
 
 	router := gin.Default()
-	router.POST("/task", controller.AddTasks)
+	router.POST("/task", taskController.AddTasks)
 
 	jsonValue, _ := json.Marshal(taskInput)
 
@@ -132,19 +135,20 @@ func TestCreateTaskWithMock(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	mockService.AssertExpectations(t)
+	taskRepository.AssertExpectations(t)
 }
 
 // Test para DeleteTask
 func TestDeleteTask(t *testing.T) {
-	mockService := new(MockTaskServices)
+	taskRepository := new(MockTaskServices)
+	taskServices := services.NewTaskService(taskRepository)
+	taskController := controllers.NewTaskController(*taskServices)
 	router := SetUpRouter()
-	controllers := controllers.NewTaskController(mockService)
 
 	// Configuración del mock
-	mockService.On("DeleteTask", "1").Return(nil)
+	taskRepository.On("DeleteTask", "1").Return(nil)
 
-	router.DELETE("/tasks/:id", controllers.DeleteTask)
+	router.DELETE("/tasks/:id", taskController.DeleteTask)
 
 	req, _ := http.NewRequest("DELETE", "/tasks/1", nil)
 	w := httptest.NewRecorder()
@@ -152,14 +156,15 @@ func TestDeleteTask(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	mockService.AssertExpectations(t)
+	taskRepository.AssertExpectations(t)
 }
 
 // Test para FindTaskById
 
 func TestFindTaskById(t *testing.T) {
-	mockService := new(MockTaskServices)
-	controllers := controllers.NewTaskController(mockService)
+	taskRepository := new(MockTaskServices)
+	taskServices := services.NewTaskService(taskRepository)
+	taskController := controllers.NewTaskController(*taskServices)
 	router := SetUpRouter()
 
 	// Configuración del mock
@@ -169,9 +174,9 @@ func TestFindTaskById(t *testing.T) {
 		CreatedAt: time.Now(),
 		Completed: false,
 	}
-	mockService.On("FindTaskById", "1").Return(mockTask, nil)
+	taskRepository.On("FindTaskById", "1").Return(mockTask, nil)
 
-	router.GET("/tasks/:id", controllers.GetTaskById)
+	router.GET("/tasks/:id", taskController.GetTaskById)
 
 	req, _ := http.NewRequest("GET", "/tasks/1", nil)
 	w := httptest.NewRecorder()
@@ -184,13 +189,14 @@ func TestFindTaskById(t *testing.T) {
 
 	assert.Equal(t, mockTask.Title, responseTask.Title)
 
-	mockService.AssertExpectations(t)
+	taskRepository.AssertExpectations(t)
 }
 
 // Test para UpdateTask
 func TestUpdateTask(t *testing.T) {
-	mockService := new(MockTaskServices)
-	controller := controllers.NewTaskController(mockService)
+	taskRepository := new(MockTaskServices)
+	taskServices := services.NewTaskService(taskRepository)
+	taskController := controllers.NewTaskController(*taskServices)
 	router := SetUpRouter()
 
 	// Configuración del mock
@@ -206,9 +212,9 @@ func TestUpdateTask(t *testing.T) {
 		CreatedAt: time.Now(),
 		Completed: false,
 	}
-	mockService.On("UpdateTask", "1", input).Return(mockTask, nil)
+	taskRepository.On("UpdateTask", "1", input).Return(mockTask, nil)
 
-	router.PUT("/tasks/:id", controller.UpdateTask)
+	router.PUT("/tasks/:id", taskController.UpdateTask)
 
 	taskJSON, _ := json.Marshal(input)
 	req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(taskJSON))
@@ -224,5 +230,5 @@ func TestUpdateTask(t *testing.T) {
 
 	assert.Equal(t, mockTask.Title, responseTask.Title)
 
-	mockService.AssertExpectations(t)
+	taskRepository.AssertExpectations(t)
 }

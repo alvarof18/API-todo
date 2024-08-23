@@ -19,8 +19,8 @@ type taskRepositoryImpl struct {
 	db *sql.DB
 }
 
-func NewTaskReposiory(db *sql.DB) TaskRepository {
-	return &taskRepositoryImpl{db: db}
+func NewTaskReposiory(db *sql.DB) taskRepositoryImpl {
+	return taskRepositoryImpl{db: db}
 }
 
 // AddTasks implements TaskRepository.

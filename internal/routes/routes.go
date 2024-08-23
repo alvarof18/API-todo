@@ -12,7 +12,7 @@ import (
 func Routes(router *gin.Engine, db *sql.DB) {
 
 	taskRepository := repositories.NewTaskReposiory(db)
-	taskService := services.NewTaskService(taskRepository)
+	taskService := services.NewTaskService(&taskRepository)
 	taskController := controllers.NewTaskController(*taskService)
 
 	router.GET("/tasks", taskController.GetAllTasks)
