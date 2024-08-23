@@ -26,7 +26,7 @@ func main() {
 	//Configurar rutas en Gin
 	router := gin.Default()
 	routes.Routes(router, db)
-	router.Run("localhost:8080")
 	log.Println("Servidor inicializado")
+	router.Run(cfg.Host + ":" + cfg.HostPort)
 
 }
