@@ -11,17 +11,17 @@ import (
 )
 
 type TaskController struct {
-	TaskService services.TaskService
+	taskService services.TaskService
 }
 
 // Simular una inyeccion de dependencia
 func NewTaskController(service services.TaskService) *TaskController {
-	return &TaskController{TaskService: service}
+	return &TaskController{taskService: service}
 }
 
 func (ctrl *TaskController) GetAllTasks(context *gin.Context) {
 
-	tasks := ctrl.TaskService.GetAllTasks()
+	tasks := ctrl.taskService.GetAllTasks()
 	context.IndentedJSON(http.StatusOK, tasks)
 }
 
@@ -31,7 +31,7 @@ func (ctrl *TaskController) AddTasks(context *gin.Context) {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 		return
 	}
-	newTask, err := ctrl.TaskService.AddTasks(payload)
+	newTask, err := ctrl.taskService.AddTasks(payload)
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "Failed to create task"})
 		return
@@ -42,7 +42,7 @@ func (ctrl *TaskController) AddTasks(context *gin.Context) {
 func (ctrl *TaskController) DeleteTask(context *gin.Context) {
 	idTask := context.Param("id")
 
-	err := ctrl.TaskService.DeleteTask(idTask)
+	err := ctrl.taskService.DeleteTask(idTask)
 
 	if err != nil {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"Error": "Task not found to delete"})
@@ -53,7 +53,7 @@ func (ctrl *TaskController) DeleteTask(context *gin.Context) {
 
 func (ctrl *TaskController) GetTaskById(context *gin.Context) {
 	id := context.Param("id")
-	task, err := ctrl.TaskService.FindTaskById(id)
+	task, err := ctrl.taskService.FindTaskById(id)
 
 	if err != nil {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"Error": err})
@@ -70,7 +70,7 @@ func (ctrl *TaskController) UpdateTask(context *gin.Context) {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 		return
 	}
-	updateTask, err := ctrl.TaskService.UpdateTask(idTask, input)
+	updateTask, err := ctrl.taskService.UpdateTask(idTask, input)
 	if err != nil {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"Error": "Task not found to Update"})
 		return
